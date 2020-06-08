@@ -1,0 +1,17 @@
+{
+  "manifest_version": 2,
+  "name": "GitHub Email Backlog",
+  "version": "0",
+
+  "description": "Update your GitHub status with the current length of your email backlog.",
+
+  "content_scripts": [
+    {
+      "matches": ["https://github.com/*"],
+      "js": ["content_script.js"]
+    }
+  ],
+  "incognito": "not_allowed",
+  "options_page": "options.html",
+  "permissions": ["cookies", "storage", "https://github.com/*"]
+}
