@@ -58,6 +58,19 @@ figures in a way that prefers overestimating to underestimating
 results in a guess of ten days. (Notice that the heuristic is based on
 wild speculation and not actual data or any solid reasoning.)
 
+## Implementation
+
+It's a Chrome extension which uses a combination of GitHub cookies and
+a personal access token to do its work. The extension saves a
+timestamp to prevent running more often than every six hours. When it
+does run, it starts by using a personal access token to fetch
+notifications from the GitHub API v3. Then it computes your profile
+status and makes some hacky POST requests to GitHub.com to update it
+(this functionality is not exposed through the API). Optionally, the
+extension can hit a webhook after a successful run. I use [Dead Man's
+Snitch](https://deadmanssnitch.com/) to be notified if the updater
+stops working.
+
 ## Usage requirements
 
 Unfortunately, this approach will probably not work for you, unless
@@ -72,3 +85,23 @@ the following constraints:
 * You process emails in a similar manner to me (namely, you put in a
   similar amount of work on it each day and roll over remaining emails
   to the next day).
+* You are on GitHub.com more or less every day, so the extension can
+  update your profile in the background.
+
+## Installation
+
+(This section is at the end because you probably shouldn't be
+installing this application unless you have a clear understanding of
+the constraints that its design imposes on you in order to get good
+data.)
+
+The repository is an unpacked Chrome extension. Basically, you go to
+`chrome://extensions`, turn on developer mode, click "Load unpacked",
+and select the repository. You have to click the refresh button on the
+extensions page whenever you pull an update.
+
+Right-click on the extension icon in the Chrome menu bar and go to the
+options page. You need to generate a GitHub personal access token with
+the `notifications` scope and fill that in. This is also where you can
+put in your webhook URL if you want to use that. (Highly recommended,
+as the script makes no attempt whatsoever to report errors.)
