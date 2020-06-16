@@ -143,7 +143,7 @@ function estimateResponseTimeDays(notifications) {
       Math.floor(countUnreadFraction(notifications) * notifications.length)
     ];
   const age = new Date().getTime() - new Date(percentile.updated_at).getTime();
-  return (age / 86400 / 1000) * 2;
+  return (age / 86400 / 1000) * 1.5;
 }
 
 function getStatus(numDays) {

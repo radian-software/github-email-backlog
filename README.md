@@ -42,9 +42,9 @@ estimates my response time:
   sorted from newest to oldest.
 * Compute the duration from that notification's timestamp to the
   current date.
-* Multiply by two. This is what I report as my estimated response time.
+* Multiply by 3/2. This is what I report as my estimated response time.
 
-*Why multiply by two?* I want to account for the problem of spikes in
+*Why multiply by 3/2?* I want to account for the problem of spikes in
 response time. Sometimes I become busy with non-email-related chores,
 and go for a while without responding to any email. In this case, it's
 impossible to know how long it will be until I start responding again.
@@ -54,9 +54,10 @@ start again (this is from some results in Bayesian probability
 theory). On the other hand, if there are five days of email in my
 inbox as a steady state, we can expect it will take new emails five
 days to make their way to the front of the queue. Combining these
-figures in a way that prefers overestimating to underestimating
-results in a guess of ten days. (Notice that the heuristic is based on
-wild speculation and not actual data or any solid reasoning.)
+figures and accounting somewhat for the overestimate (maybe I will
+start processing email quickly soon) results in a guess of 7 1/2 days.
+(Notice that the heuristic is based on wild speculation and not actual
+data or any solid reasoning.)
 
 ## Implementation
 
