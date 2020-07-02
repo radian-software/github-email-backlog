@@ -134,6 +134,11 @@ async function getAllNotifications({ token }) {
     }
     idx += 1;
   }
+  all.sort(({ updated_at: a }, { updated_at: b }) => {
+    if (a < b) return +1;
+    if (a > b) return -1;
+    return 0;
+  });
   return all;
 }
 
