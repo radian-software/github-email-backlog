@@ -1,62 +1,30 @@
-const RUN_PERIOD_MS = 6 * 3600 * 1000;
-
-async function shouldRun() {
-  const { timestamp: lastTimestamp } = await new Promise((resolve) =>
-    chrome.storage.sync.get(["timestamp"], resolve)
-  );
-  const curTimestamp = new Date().getTime();
-  if (
-    !Number.isInteger(lastTimestamp) ||
-    curTimestamp - lastTimestamp >= RUN_PERIOD_MS
-  ) {
-    await new Promise((resolve) =>
-      chrome.storage.sync.set({ timestamp: curTimestamp }, resolve)
-    );
-    console.log(
-      `Running as it has been ${
-        curTimestamp - lastTimestamp
-      }ms since the last run`
-    );
-    return true;
-  } else {
-    console.log(
-      `Not running as it has only been ${
-        curTimestamp - lastTimestamp
-      }ms since the last run`
-    );
-    return false;
-  }
-}
-
-async function getUsername() {
-  const resp = await fetch(`https://github.com/`, {
-    credentials: "same-origin",
+async function getUsername({ token }) {
+  const resp = await fetch("https://api.github.com/user", {
+    headers: {
+      Authorization: `token ${token}`,
+    },
   });
   if (!resp.ok) {
     throw new Error(
       `bad response from GitHub: ${resp.status} ${resp.statusText}`
     );
   }
-  const html = await resp.text();
-  const userRegex = /<meta name="user-login" content="(.+?)">/g;
-  const { value: match, done: noMatches } = html.matchAll(userRegex).next();
-  if (noMatches) {
-    throw new Error("couldn't find username in GitHub response");
-  } else {
-    return match[1];
-  }
+  return (await resp.json()).login;
 }
 
 async function getToken({ username }) {
-  const resp = await fetch(`https://github.com/${username}`, {
-    credentials: "same-origin",
-  });
+  const resp = await fetch(`https://github.com/${username}`);
   if (!resp.ok) {
     throw new Error(
       `bad response from GitHub: ${resp.status} ${resp.statusText}`
     );
   }
   const html = await resp.text();
+  if (html.includes("radon.neon@gmail.com")) {
+    console.log("We have successfully authenticated");
+  } else {
+    console.error("We have NOT authenticated");
+  }
   const tokenRegex = /\/users\/status.+name="authenticity_token" value="(.+?)"/g;
   const { value: match, done: noMatches } = html.matchAll(tokenRegex).next();
   if (noMatches) {
@@ -76,9 +44,9 @@ async function setStatus({ token, message, emoji, busy }) {
   const resp = await fetch("https://github.com/users/status", {
     method: "POST",
     body: form,
-    credentials: "same-origin",
   });
   if (!resp.ok) {
+    console.log(await resp.text());
     throw new Error(
       `bad response from GitHub: ${resp.status} ${resp.statusText}`
     );
@@ -194,7 +162,7 @@ async function updateStatus() {
   console.log(`Estimated response time: ${Math.floor(numDays)} days`);
   const status = getStatus(numDays);
   console.log("Determining username ...");
-  const username = await getUsername();
+  const username = await getUsername({ token: apiToken });
   console.log("Fetching CRSF token for profile status form ...");
   const crsfToken = await getToken({ username });
   console.log("Updating GitHub status ...");
@@ -210,10 +178,31 @@ async function updateStatus() {
   }
 }
 
-async function updateStatusMaybe() {
-  if (await shouldRun()) {
-    await updateStatus();
-  }
-}
+// https://developer.chrome.com/extensions/webRequest
+chrome.webRequest.onBeforeSendHeaders.addListener(
+  (details) => {
+    const requestHeaders = details.requestHeaders.filter(
+      (header) => header.name !== "Origin"
+    );
+    requestHeaders.push({
+      name: "Origin",
+      value: "https://github.com",
+    });
+    return {
+      requestHeaders,
+    };
+  },
+  { urls: ["<all_urls>"] },
+  ["blocking", "requestHeaders", "extraHeaders"]
+);
 
-updateStatusMaybe().catch(console.error);
+chrome.runtime.onInstalled.addListener(() => {
+  chrome.alarms.create("refresh", {
+    periodInMinutes: 3 * 60,
+    when: Date.now(),
+  });
+});
+
+chrome.alarms.onAlarm.addListener(() => {
+  updateStatus().catch(console.error);
+});
