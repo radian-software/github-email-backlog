@@ -64,10 +64,8 @@ function getOldestTimestamp(notifications) {
 }
 
 async function getNotifications({ before, token }) {
-  let url = "https://api.github.com/notifications?all=true";
-  if (before) {
-    url += `&before=${before}`;
-  }
+  before = before || new Date().toISOString();
+  let url = `https://api.github.com/notifications?all=true&before=${before}`;
   const resp = await fetch(url, {
     headers: {
       Authorization: `token ${token}`,
