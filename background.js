@@ -126,7 +126,7 @@ function getStatus(numDays) {
     };
   } else {
     return {
-      message: "I typically reply in about 1 day",
+      message: "When possible, I reply in about 1 day",
       emoji: "kiwi_fruit",
       busy: false,
     };
