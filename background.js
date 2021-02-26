@@ -126,7 +126,7 @@ function getStatus(numDays) {
     };
   } else {
     return {
-      message: "When possible, I reply in about 1 day",
+      message: `Estimated inbox backlog: a few days`,
       emoji: "kiwi_fruit",
       busy: false,
     };
