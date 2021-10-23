@@ -25,7 +25,8 @@ async function getToken({ username }) {
   } else {
     console.error("We have NOT authenticated");
   }
-  const tokenRegex = /\/users\/status.+name="authenticity_token" value="(.+?)"/g;
+  const tokenRegex =
+    /\/users\/status.+name="authenticity_token" value="(.+?)"/g;
   const { value: match, done: noMatches } = html.matchAll(tokenRegex).next();
   if (noMatches) {
     throw new Error("couldn't find authenticity token in GitHub response");
@@ -63,9 +64,9 @@ function getOldestTimestamp(notifications) {
   return oldestTimestamp;
 }
 
-async function getNotifications({ before, token }) {
-  before = before || new Date().toISOString();
-  let url = `https://api.github.com/notifications?all=true&before=${before}`;
+async function getNotifications({ token, pageNum }) {
+  pageNum = pageNum || 1;
+  let url = `https://api.github.com/notifications?all=true&page=${pageNum}`;
   const resp = await fetch(url, {
     headers: {
       Authorization: `token ${token}`,
@@ -86,19 +87,13 @@ function countUnreadFraction(notifications) {
 async function getAllNotifications({ token }) {
   console.log("Fetching notifications (page 1) ...");
   let curPage = await getNotifications({ token });
-  let all = curPage;
-  let ids = new Set(all.map((n) => n.id));
-  let idx = 2;
+  let all = [...curPage];
+  let pageNum = 2;
   while (countUnreadFraction(curPage) > 0.1) {
-    const before = curPage[curPage.length - 1].updated_at;
-    console.log(`Fetching notifications (page ${idx}) ...`);
-    curPage = await getNotifications({ token, before });
-    for (const n of curPage) {
-      if (!ids.has(n.id)) {
-        all.push(n);
-      }
-    }
-    idx += 1;
+    console.log(`Fetching notifications (page ${pageNum}) ...`);
+    curPage = await getNotifications({ token, pageNum });
+    all = all.concat(curPage);
+    pageNum += 1;
   }
   all.sort(({ updated_at: a }, { updated_at: b }) => {
     if (a < b) return +1;
@@ -161,10 +156,10 @@ async function updateStatus() {
   const status = getStatus(numDays);
   console.log("Determining username ...");
   const username = await getUsername({ token: apiToken });
-  console.log("Fetching CRSF token for profile status form ...");
-  const crsfToken = await getToken({ username });
+  console.log("Fetching CSRF token for profile status form ...");
+  const csrfToken = await getToken({ username });
   console.log("Updating GitHub status ...");
-  await setStatus({ token: crsfToken, ...status });
+  await setStatus({ token: csrfToken, ...status });
   console.log("Successfully updated GitHub status ...");
   const { webhook } = await new Promise((resolve) =>
     chrome.storage.sync.get(["webhook"], resolve)
