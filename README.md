@@ -1,3 +1,7 @@
+**DEPRECATED:** I no longer use this application, and it no longer
+works due to changes by Google to the requirements for Chrome
+etxensions.
+
 # GitHub Email Backlog
 
 This is a Chrome extension that looks at your GitHub notifications
